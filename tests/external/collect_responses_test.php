@@ -45,6 +45,9 @@ final class collect_responses_test extends advanced_testcase {
 
     /**
      * Builds a minimal valid response payload for JSON encoding.
+     *
+     * @param array $overrides values overriding the defaults
+     * @return array the response payload
      */
     private function make_responses(array $overrides = []): array {
         return array_merge([
