@@ -28,7 +28,6 @@ namespace catquizcentralhub_host\external;
 
 use catquizcentralhub_host\event\responses_added;
 use catquizcentralhub_host\response\response_handler;
-
 use core\context\system as context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;

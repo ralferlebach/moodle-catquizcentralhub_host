@@ -41,7 +41,6 @@ class responses_added extends catquiz_event_base {
     protected function init() {
         $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_OTHER;
-        $this->data['objecttable'] = 'local_catquiz_rresponses';
     }
 
     /**

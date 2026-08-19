@@ -25,7 +25,6 @@
 namespace catquizcentralhub_host\external;
 
 use local_catquiz\hash\question_hasher;
-
 use core\context\system as context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;
