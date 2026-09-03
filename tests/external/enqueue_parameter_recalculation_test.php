@@ -37,6 +37,12 @@ final class enqueue_parameter_recalculation_test extends advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+
+        // Issue #65: the switch is a server-side gate now. These tests ran with it
+        // off and still expected the service to work - which is exactly the state
+        // the issue calls out as written into the tests. Enabling it here makes the
+        // positive path explicit instead of implicit.
+        set_config('enable_sync_as_hub', 1, 'catquizcentralhub_host');
         $this->setAdminUser();
     }
 

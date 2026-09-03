@@ -33,6 +33,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use local_catquiz\catscale;
 use local_catquiz\local\model\model_item_param;
+use catquizcentralhub_host\local\hub_policy;
 
 /**
  * External service for distributing calculated item parameters to client nodes.
@@ -113,6 +114,15 @@ class distribute_parameters extends external_api {
             'questionhashes' => $questionhashes,
             'models' => $models,
         ]);
+
+        // Issue #65: with hub operation switched off this instance neither accepts
+        // nor hands out data. Hiding the buttons is not a security boundary - the web
+        // service stays reachable for anyone able to call it.
+        hub_policy::require_enabled();
+
+        // The setting says only these scales are managed by this hub, so a label
+        // outside the list is refused rather than served.
+        hub_policy::require_scale_allowed((string) $params['scalelabel']);
 
         $systemcontext = context_system::instance();
         self::validate_context($systemcontext);

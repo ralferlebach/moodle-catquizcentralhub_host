@@ -30,6 +30,7 @@ use core_external\external_function_parameters;
 use core_external\external_value;
 use core_external\external_single_structure;
 use core\task\manager;
+use catquizcentralhub_host\local\hub_policy;
 
 /**
  * External API class for enqueuing parameter recalculation.
@@ -55,6 +56,11 @@ class enqueue_parameter_recalculation extends external_api {
     public static function execute(int $scaleid): array {
         global $USER;
         self::validate_parameters(self::execute_parameters(), ['scaleid' => $scaleid]);
+
+        // Issue #65: with hub operation switched off this instance neither accepts
+        // nor hands out data. Hiding the buttons is not a security boundary - the web
+        // service stays reachable for anyone able to call it.
+        hub_policy::require_enabled();
 
         $task = new adhoc_recalculate_remote_item_parameters();
         $task->set_custom_data(['scaleid' => $scaleid, 'userid' => $USER->id]);

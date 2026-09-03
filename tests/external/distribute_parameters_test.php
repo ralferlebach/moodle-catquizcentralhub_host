@@ -40,20 +40,48 @@ final class distribute_parameters_test extends advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+
+        // Issue #65: the switch is a server-side gate now. These tests ran with it
+        // off and still expected the service to work - which is exactly the state
+        // the issue calls out as written into the tests. Enabling it here makes the
+        // positive path explicit instead of implicit.
+        set_config('enable_sync_as_hub', 1, 'catquizcentralhub_host');
+        // The scales these tests work with have to be released for the hub, since the
+        // allowlist is enforced server-side now. Individual tests narrow this further
+        // where the point is precisely that a label is not released.
+        set_config(
+            'central_scale_labels',
+            "testscale\nemptyscale\nkeys_label\nreleased_label\n",
+            'catquizcentralhub_host'
+        );
         $this->setAdminUser();
         global $USER;
         $this->adminid = $USER->id;
     }
 
-    public function test_unknown_scale_label_returns_status_false(): void {
-        $result = distribute_parameters::execute('nonexistent_label');
+    public function test_unknown_scale_label_is_refused(): void {
+        // Issue #65: a label outside central_scale_labels is refused before anything
+        // is looked up. Previously an unknown label produced a quiet status false -
+        // and so did a label that existed but was not released for this hub, which
+        // made the two indistinguishable.
+        $this->expectException(\moodle_exception::class);
+        distribute_parameters::execute('nonexistent_label');
+    }
+
+    public function test_released_scale_is_served(): void {
+        set_config('central_scale_labels', "released_label\n", 'catquizcentralhub_host');
+
+        $result = distribute_parameters::execute('released_label');
+
+        // No such scale exists, so nothing is returned - but the request itself was
+        // permitted, which is what distinguishes it from the case above.
         $this->assertFalse($result['status']);
-        $this->assertSame(0, $result['contextid']);
         $this->assertEmpty($result['parameters']);
     }
 
     public function test_result_contains_required_keys(): void {
-        $result = distribute_parameters::execute('nonexistent_label');
+        set_config('central_scale_labels', "keys_label\n", 'catquizcentralhub_host');
+        $result = distribute_parameters::execute('keys_label');
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('message', $result);
         $this->assertArrayHasKey('contextid', $result);

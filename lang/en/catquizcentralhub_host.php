@@ -27,10 +27,12 @@ $string['centralscalelabels'] = 'Central scale labels';
 $string['centralscalelabelsdesc'] = 'Enter one scale label per line. Only these scales will be managed by this hub instance.';
 $string['enablesyncashub'] = 'Instance acts as hub';
 $string['enablesyncashubdesc'] = 'When activated, client nodes can submit responses and fetch calculated item parameters from this instance.';
+$string['hubdisabled'] = 'This instance is not configured to act as a central hub.';
 $string['pluginname'] = 'CatQuiz Central Hub (Host)';
 $string['questionnotfound'] = 'Question was not found';
 $string['responses_added'] = 'New responses were submitted';
 $string['responses_added_desc'] = '{$a->sourceurl} submitted new responses. {$a->added} new responses were added, {$a->skipped} '
     . 'were skipped and {$a->errors} errors occurred';
+$string['scalenotmanaged'] = 'The scale "{$a}" is not managed by this hub instance.';
 $string['taskqueued'] = 'Remote calculation task has been queued and will run shortly.';
 $string['taskrecalculateremoteparameters'] = 'Recalculate item parameters from remote responses';

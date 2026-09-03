@@ -36,6 +36,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 use invalid_parameter_exception;
 use UnexpectedValueException;
+use catquizcentralhub_host\local\hub_policy;
 
 /**
  * External service for collecting responses from client nodes.
@@ -87,6 +88,11 @@ class collect_responses extends external_api {
      */
     public static function execute($jsondata, $sourceurl) {
         global $USER;
+
+        // Issue #65: with hub operation switched off this instance neither accepts
+        // nor hands out data. Hiding the buttons is not a security boundary - the web
+        // service stays reachable for anyone able to call it.
+        hub_policy::require_enabled();
 
         $decodeddata = json_decode($jsondata, true);
 

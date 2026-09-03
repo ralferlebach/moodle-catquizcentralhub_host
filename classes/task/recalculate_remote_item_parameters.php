@@ -19,6 +19,7 @@ namespace catquizcentralhub_host\task;
 use core\task\scheduled_task;
 use catquizcentralhub_host\calculator\remote_item_parameter_calculator;
 use local_catquiz\catquiz;
+use catquizcentralhub_host\local\hub_policy;
 
 /**
  * Task to recalculate item parameters based on remote responses.
@@ -41,6 +42,13 @@ class recalculate_remote_item_parameters extends scheduled_task {
      * Execute the task.
      */
     public function execute() {
+        // Issue #65: leftover central_scale_labels must not keep hub processing
+        // alive after the hub itself was switched off. Nothing to do is a success.
+        if (!hub_policy::is_enabled()) {
+            mtrace('Central hub operation is disabled - nothing to do.');
+            return;
+        }
+
         $repo = new catquiz();
         $config = get_config('catquizcentralhub_host');
         $labels = array_filter(explode("\n", $config->central_scale_labels ?? ''));
