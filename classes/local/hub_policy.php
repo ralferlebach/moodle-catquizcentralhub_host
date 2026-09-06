@@ -29,7 +29,7 @@ use moodle_exception;
 /**
  * Decides whether this instance acts as a hub, and for which scales.
  *
- * Issue #65: enable_sync_as_hub was read by the settings page and the template only.
+ * Enable_sync_as_hub was read by the settings page and the template only.
  * The host endpoints accepted remote responses, handed out item parameters and queued
  * recalculations regardless - so switching the hub off removed the buttons while the
  * web services kept working for anyone able to call them.
@@ -98,5 +98,31 @@ class hub_policy {
         if (!self::is_scale_allowed($label)) {
             throw new moodle_exception('scalenotmanaged', 'catquizcentralhub_host', '', $label);
         }
+    }
+    /**
+     * Throws unless the scale with this id is covered by the allowlist.
+     *
+     * The endpoints receive a scale id, not a label, while the setting is a list of
+     * labels. Resolving it here keeps that translation in one place: an endpoint that
+     * did it for itself would be free to skip it, which is how the allowlist came to
+     * be enforced on some paths and not on others.
+     *
+     * A scale that cannot be resolved is refused rather than allowed - an unknown
+     * scale is not a released one.
+     *
+     * @param int $scaleid
+     * @throws moodle_exception
+     * @return void
+     */
+    public static function require_scale_id_allowed(int $scaleid): void {
+        global $DB;
+
+        $label = $DB->get_field('local_catquiz_catscales', 'label', ['id' => $scaleid]);
+
+        if ($label === false) {
+            throw new moodle_exception('scalenotmanaged', 'catquizcentralhub_host', '', $scaleid);
+        }
+
+        self::require_scale_allowed((string) $label);
     }
 }

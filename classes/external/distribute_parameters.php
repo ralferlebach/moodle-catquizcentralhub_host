@@ -115,10 +115,16 @@ class distribute_parameters extends external_api {
             'models' => $models,
         ]);
 
-        // Issue #65: with hub operation switched off this instance neither accepts
+        // With hub operation switched off this instance neither accepts
         // nor hands out data. Hiding the buttons is not a security boundary - the web
         // service stays reachable for anyone able to call it.
         hub_policy::require_enabled();
+
+        // Handing out item parameters is an administrative act, for the
+        // same reason as accepting them.
+        $context = \context_system::instance();
+        self::validate_context($context);
+        require_capability('moodle/site:config', $context);
 
         // The setting says only these scales are managed by this hub, so a label
         // outside the list is refused rather than served.

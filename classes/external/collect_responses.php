@@ -89,10 +89,23 @@ class collect_responses extends external_api {
     public static function execute($jsondata, $sourceurl) {
         global $USER;
 
-        // Issue #65: with hub operation switched off this instance neither accepts
+        // With hub operation switched off this instance neither accepts
         // nor hands out data. Hiding the buttons is not a security boundary - the web
         // service stays reachable for anyone able to call it.
         hub_policy::require_enabled();
+
+        // The scale allowlist does not apply here, and that is deliberate rather than
+        // an omission: the payload identifies questions by hash and carries no scale,
+        // so there is nothing to match against central_scale_labels. Adding a check
+        // that always passes would look like protection while providing none. What
+        // guards this endpoint is the hub switch above and the capability below.
+        //
+        // Accepting remote response data is an administrative act. The
+        // entry in db/services.php is metadata and is not checked at run time, so
+        // without this any authenticated caller could write into the hub.
+        $context = \context_system::instance();
+        self::validate_context($context);
+        require_capability('moodle/site:config', $context);
 
         $decodeddata = json_decode($jsondata, true);
 

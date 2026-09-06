@@ -57,10 +57,17 @@ class enqueue_parameter_recalculation extends external_api {
         global $USER;
         self::validate_parameters(self::execute_parameters(), ['scaleid' => $scaleid]);
 
-        // Issue #65: with hub operation switched off this instance neither accepts
+        // With hub operation switched off this instance neither accepts
         // nor hands out data. Hiding the buttons is not a security boundary - the web
         // service stays reachable for anyone able to call it.
         hub_policy::require_enabled();
+
+        // Queueing a recalculation is administrative work on somebody
+        // else's data, and the scale has to be one this hub actually manages.
+        $context = \context_system::instance();
+        self::validate_context($context);
+        require_capability('moodle/site:config', $context);
+        hub_policy::require_scale_id_allowed($scaleid);
 
         $task = new adhoc_recalculate_remote_item_parameters();
         $task->set_custom_data(['scaleid' => $scaleid, 'userid' => $USER->id]);

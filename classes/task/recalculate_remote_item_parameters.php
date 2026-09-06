@@ -42,7 +42,7 @@ class recalculate_remote_item_parameters extends scheduled_task {
      * Execute the task.
      */
     public function execute() {
-        // Issue #65: leftover central_scale_labels must not keep hub processing
+        // Leftover central_scale_labels must not keep hub processing
         // alive after the hub itself was switched off. Nothing to do is a success.
         if (!hub_policy::is_enabled()) {
             mtrace('Central hub operation is disabled - nothing to do.');

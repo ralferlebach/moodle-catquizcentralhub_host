@@ -34,6 +34,11 @@ use catquizcentralhub_host\task\adhoc_recalculate_remote_item_parameters;
  * @covers     \catquizcentralhub_host\external\enqueue_parameter_recalculation
  */
 final class enqueue_parameter_recalculation_test extends advanced_testcase {
+    /**
+     * Scale released for this hub, created in setUp().
+     * @var int
+     */
+    protected int $scaleid = 0;
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
@@ -43,16 +48,42 @@ final class enqueue_parameter_recalculation_test extends advanced_testcase {
         // the issue calls out as written into the tests. Enabling it here makes the
         // positive path explicit instead of implicit.
         set_config('enable_sync_as_hub', 1, 'catquizcentralhub_host');
+
+        // Issue #65: the scale allowlist is enforced server-side now, and it resolves
+        // the id to a label. A scale that exists and is released is therefore part of
+        // the fixture rather than an assumed id - the previous version passed 1 and
+        // relied on nothing checking it.
+        global $DB;
+        $now = time();
+        $contextid = (int) $DB->insert_record('local_catquiz_catcontext', (object) [
+            'name' => 'Enqueue context',
+            'description' => '',
+            'descriptionformat' => FORMAT_HTML,
+            'starttimestamp' => $now - 100,
+            'endtimestamp' => $now + 10000,
+            'timecreated' => $now,
+            'timemodified' => $now,
+            'usermodified' => 0,
+        ]);
+        $this->scaleid = (int) $DB->insert_record('local_catquiz_catscales', (object) [
+            'parentid' => 0,
+            'name' => 'Released scale',
+            'label' => 'K1',
+            'contextid' => $contextid,
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ]);
+        set_config('central_scale_labels', "K1\n", 'catquizcentralhub_host');
         $this->setAdminUser();
     }
 
     public function test_execute_returns_success_true(): void {
-        $result = enqueue_parameter_recalculation::execute(1);
+        $result = enqueue_parameter_recalculation::execute($this->scaleid);
         $this->assertTrue($result['success']);
     }
 
     public function test_execute_returns_message_string(): void {
-        $result = enqueue_parameter_recalculation::execute(1);
+        $result = enqueue_parameter_recalculation::execute($this->scaleid);
         $this->assertArrayHasKey('message', $result);
         $this->assertIsString($result['message']);
     }
@@ -60,21 +91,21 @@ final class enqueue_parameter_recalculation_test extends advanced_testcase {
     public function test_execute_queues_adhoc_task(): void {
         global $DB;
         $before = $DB->count_records('task_adhoc');
-        enqueue_parameter_recalculation::execute(1);
+        enqueue_parameter_recalculation::execute($this->scaleid);
         $this->assertSame($before + 1, $DB->count_records('task_adhoc'));
     }
 
     public function test_execute_task_custom_data_contains_scaleid(): void {
-        enqueue_parameter_recalculation::execute(42);
+        enqueue_parameter_recalculation::execute($this->scaleid);
         $tasks = \core\task\manager::get_adhoc_tasks(adhoc_recalculate_remote_item_parameters::class);
         $this->assertNotEmpty($tasks);
         $task = reset($tasks);
         $data = $task->get_custom_data();
-        $this->assertSame(42, $data->scaleid);
+        $this->assertSame($this->scaleid, $data->scaleid);
     }
 
     public function test_execute_result_contains_required_keys(): void {
-        $result = enqueue_parameter_recalculation::execute(1);
+        $result = enqueue_parameter_recalculation::execute($this->scaleid);
         $this->assertArrayHasKey('success', $result);
         $this->assertArrayHasKey('message', $result);
     }
