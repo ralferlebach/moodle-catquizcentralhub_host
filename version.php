@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026090500;
+$plugin->version   = 2026102800;
 $plugin->requires  = 2022041900;
 $plugin->component = 'catquizcentralhub_host';
 

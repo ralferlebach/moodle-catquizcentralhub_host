@@ -166,4 +166,28 @@ final class hub_disabled_test extends advanced_testcase {
         $this->expectException(\moodle_exception::class);
         hub_policy::require_scale_id_allowed(999999);
     }
+
+    /**
+     * The scheduled recalculation of remote item parameters is a successful no-op while the hub is off, even with a
+     * released scale (local_catquiz #65, re-audit 27.10.2026): it ends without an error and calculates nothing.
+     *
+     * @covers \catquizcentralhub_host\task\recalculate_remote_item_parameters
+     * @return void
+     */
+    public function test_scheduled_recalculation_is_a_noop(): void {
+        global $DB;
+        $DB->insert_record('local_catquiz_catscales', (object) [
+            'name' => 'K1 scale', 'label' => 'K1', 'parentid' => 0, 'contextid' => 1,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        $before = $DB->count_records('local_catquiz_itemparams');
+
+        ob_start();
+        (new \catquizcentralhub_host\task\recalculate_remote_item_parameters())->execute();
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('disabled - nothing to do', $output);
+        $this->assertStringNotContainsString('Processing scale', $output);
+        $this->assertSame($before, $DB->count_records('local_catquiz_itemparams'));
+    }
 }
